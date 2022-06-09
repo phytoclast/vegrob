@@ -47,7 +47,7 @@ tree.ht = 0.75
 crn.ht = .25
 crn.wd = 0.25
 tree.wd = 0.025
-maketree <- function(treedist)
+# maketree <- function(treedist)
 g.conifer.crown <- polygonGrob(x=c(0.5-crn.wd/2, 0.5, 0.5+crn.wd/2), 
                                y=c(crn.ht, tree.ht, crn.ht), gp=gpar(fill='darkgreen'))
 g.crown <- roundrectGrob(x=0.5, y=(tree.ht+crn.ht)/2, width=crn.wd, height=(tree.ht-crn.ht), gp=gpar(fill='green'))
@@ -80,7 +80,7 @@ g.trunk <- rectGrob(x=unit(0.5,'npc'), y=unit((crn.ht-0)/2,'npc'),
 
 
 vp <- viewport(x=unit(0/5,'npc'), y=unit(.5/5,'npc'), width=unit(5,'cm'), height=unit(5,'cm'))
-tree <- grobTree(g.crown, g.trunk, vp=vp)
+tree <- grobTree(g.crown, g.trunk)
 
 ggplot()+
   geom_point(aes(x=x,y=y), data = treedist)+
@@ -89,24 +89,79 @@ ggplot()+
 #https://cran.r-project.org/web/packages/ggpp/vignettes/grammar-extensions.html#geom_grob
 library(ggpmisc)
 library(dplyr)
-file.name <- 
-  system.file("extdata", "Isoquercitin.png", 
-              package = "ggpp", mustWork = TRUE)
-Isoquercitin <- magick::image_read(file.name)
-grobs.tb <- tibble(x = c(0, 10, 20, 40), y = c(4, 5, 6, 9),
-                   width = c(0.05, 0.05, .5, 1),
-                   height =  c(0.05, 0.05, 1, 0.3),
-                   grob = list(grid::circleGrob(), 
-                               grid::rectGrob(), 
+
+tree.ht = 1
+crn.ht = .25
+crn.wd = .5
+tree.wd = 0.025
+
+g.crown <- roundrectGrob(x=unit(0.5,'npc'), y=unit((tree.ht+crn.ht)/2,'npc'), 
+                         width=unit(crn.wd,'npc'), height=unit(tree.ht-crn.ht,'npc'), gp=gpar(fill='green',alpha=0.5))
+
+g.trunk <- rectGrob(x=unit(0.5,'npc'), y=unit((crn.ht-0)/2,'npc'), 
+                    width=unit(tree.wd,'npc'), height=unit(crn.ht-0,'npc'), gp=gpar(fill='brown'))
+
+tree <- grobTree(g.crown, g.trunk)
+
+g.conifer.crown <- polygonGrob(x=c(0.5-crn.wd/2, 0.5, 0.5+crn.wd/2), 
+                               y=c(crn.ht, tree.ht, crn.ht), gp=gpar(fill='darkgreen',alpha=0.5))
+
+g.trunk <- rectGrob(x=0.5, y=(crn.ht-0)/2, width=tree.wd, height=(crn.ht-0), gp=gpar(fill='brown'))
+
+tree2 <- grobTree(g.conifer.crown, g.trunk)
+
+g.crown.round <- polygonGrob(x=c(0.5-crn.wd/2,
+                                 0.5-crn.wd/2,
+                                 0.5-0.75*crn.wd/2,
+                                 0.5-0.5*crn.wd/2,
+                                 0.5-0.25*crn.wd/2,
+                                 0.5,
+                                 0.5+0.25*crn.wd/2,
+                                 0.5+0.5*crn.wd/2,
+                                 0.5+0.75*crn.wd/2,
+                                 0.5+crn.wd/2,
+                                 0.5+crn.wd/2), 
+                             y=c(crn.ht,
+                                 (crn.ht*0.33+tree.ht*0.67),
+                                 (crn.ht*0.15+tree.ht*0.85),
+                                 (crn.ht*0.05+tree.ht*0.95),
+                                 (crn.ht*0.02+tree.ht*0.98),
+                                 tree.ht, 
+                                 (crn.ht*0.02+tree.ht*0.98),
+                                 (crn.ht*0.05+tree.ht*0.95),
+                                 (crn.ht*0.15+tree.ht*0.85),
+                                 (crn.ht*0.33+tree.ht*0.67),
+                                 crn.ht), gp=gpar(fill='green',alpha=0.5))
+
+grid.draw(g.crown.round)
+tree3 <- grobTree(g.crown.round, g.trunk)
+
+sample(1:50, 10)
+
+1-(1-0.01)^2
+
+
+
+
+
+
+grobs.tb <- tibble(x = c(3, 18, 20,30,25, 40), y = c(2, 5, 5, 5, 7.5, 5)/2,
+                   width = c(2, 5,5,8, 7.5, 5)/40,
+                   height =  c(2, 5,5,5, 7.5, 5)/10,
+                   grob = list(tree2, 
+                               tree3, 
+                               tree3,
                                tree2,
-                               grid::rasterGrob(image = Isoquercitin)))
+                               tree3,
+                               tree2))
 
 ggplot() +
   geom_grob(data = grobs.tb, 
-            aes(x, y, label = grob, vp.width = width, vp.height = height),
-            hjust = 0.7, vjust = 0.55) +
-  scale_y_continuous(expand = expansion(mult = 0.3, add = 0)) +
-  scale_x_continuous(expand = expansion(mult = 0.2, add = 0)) +
+            aes(x, y, label = grob, vp.width = width, vp.height = height)
+            ) +
+  scale_y_continuous(name='canopy height (m)',breaks=c(0:10)) +
+  scale_x_continuous(breaks=c(0:25)*5) +
+  coord_cartesian(ylim = c(0,10), xlim = c(0,50), expand = F)+
   theme_bw(12)
 
 
