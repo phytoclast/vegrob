@@ -87,6 +87,7 @@ ggplot()+
   coord_cartesian(xlim = c(0,5),ylim = c(0,5)) +
   grid_panel(tree)
 #https://cran.r-project.org/web/packages/ggpp/vignettes/grammar-extensions.html#geom_grob
+library(grid)
 library(ggpmisc)
 library(dplyr)
 
@@ -191,7 +192,7 @@ tree.height=30
 branch.height=20
 crown.width=15
 diameter=35
-total.cover = 0.85
+total.cover = 0.99
 
 tree1 <- maketree1(tree.height, branch.height, crown.width, diameter)
 grid.newpage()
@@ -209,12 +210,7 @@ y = height/2
 grobs.tb <- tibble(x = x, y =y,
                    width = width/50,
                    height =  height/50,
-                   grob = list(tree1, 
-                               tree1, 
-                               tree1,
-                               tree1,
-                               tree1
-                              ))
+                   grob = list(tree1))
 
 ggplot() +
   geom_grob(data = grobs.tb, 
@@ -222,7 +218,7 @@ ggplot() +
             ) +
   scale_y_continuous(name='canopy height (m)',breaks=c(0:25)*5) +
   scale_x_continuous(breaks=c(0:25)*5) +
-  coord_cartesian(ylim = c(0,50), xlim = c(0,50), expand = F)+
+  coord_fixed(ylim = c(0,50), xlim = c(0,50), expand = F)+
   theme_bw(12)
 
 
