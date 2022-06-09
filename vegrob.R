@@ -133,35 +133,96 @@ g.crown.round <- polygonGrob(x=c(0.5-crn.wd/2,
                                  (crn.ht*0.33+tree.ht*0.67),
                                  crn.ht), gp=gpar(fill='green',alpha=0.5))
 
-grid.draw(g.crown.round)
+
 tree3 <- grobTree(g.crown.round, g.trunk)
 
 sample(1:50, 10)
+c=0.19
+p=.1
+n=2
+c = 1-(1-p)^n
+1-c = (1-p)^n
+log(1-c) = n*log(1-p)
 
-1-(1-0.01)^2
+ntrees <-  function(totalcover,crown.width, transect.length){
+  numberoftrees = log(1-totalcover)/log(1-crown.width/transect.length)
+return(numberoftrees)}
+
+maketree1 <- function(tree.height, branch.height, crown.width, diameter){
+  
+
+  
+  
+  
+  tree.ht=tree.height/tree.height
+  crn.ht=branch.ht/tree.height
+  crn.wd=crown.width/tree.height
+  tree.wd=diameter/100/tree.height
+  
+  
+  
+  g.crown.round <- polygonGrob(x=c(0.5-crn.wd/2,
+                                   0.5-crn.wd/2,
+                                   0.5-0.75*crn.wd/2,
+                                   0.5-0.5*crn.wd/2,
+                                   0.5-0.25*crn.wd/2,
+                                   0.5,
+                                   0.5+0.25*crn.wd/2,
+                                   0.5+0.5*crn.wd/2,
+                                   0.5+0.75*crn.wd/2,
+                                   0.5+crn.wd/2,
+                                   0.5+crn.wd/2), 
+                               y=c(crn.ht,
+                                   (crn.ht*0.33+tree.ht*0.67),
+                                   (crn.ht*0.15+tree.ht*0.85),
+                                   (crn.ht*0.05+tree.ht*0.95),
+                                   (crn.ht*0.02+tree.ht*0.98),
+                                   tree.ht, 
+                                   (crn.ht*0.02+tree.ht*0.98),
+                                   (crn.ht*0.05+tree.ht*0.95),
+                                   (crn.ht*0.15+tree.ht*0.85),
+                                   (crn.ht*0.33+tree.ht*0.67),
+                                   crn.ht), gp=gpar(fill='green',alpha=0.5))
+  g.trunk <- rectGrob(x=0.5, y=(crn.ht-0)/2, width=tree.wd, height=(crn.ht-0), gp=gpar(fill='brown'))
+  return(grobTree(g.crown.round, g.trunk))
+}
+
+tree.height=30
+branch.height=20
+crown.width=15
+diameter=35
+total.cover = 0.85
+
+tree1 <- maketree1(tree.height, branch.height, crown.width, diameter)
+grid.newpage()
+grid.draw(tree1)
+
+n=round(ntrees(total.cover, crown.width, 50),0)
+
+x = sample(0:50, n)
+rando =  rnorm(n)
+height = rando*0.05*tree.height+tree.height-0.05/2*tree.height
+width = rando*0.05*crown.width+crown.width
+y = height/2
 
 
-
-
-
-
-grobs.tb <- tibble(x = c(3, 18, 20,30,25, 40), y = c(2, 5, 5, 5, 7.5, 5)/2,
-                   width = c(2, 5,5,8, 7.5, 5)/40,
-                   height =  c(2, 5,5,5, 7.5, 5)/10,
-                   grob = list(tree2, 
-                               tree3, 
-                               tree3,
-                               tree2,
-                               tree3,
-                               tree2))
+grobs.tb <- tibble(x = x, y =y,
+                   width = width/50,
+                   height =  height/50,
+                   grob = list(tree1, 
+                               tree1, 
+                               tree1,
+                               tree1,
+                               tree1
+                              ))
 
 ggplot() +
   geom_grob(data = grobs.tb, 
             aes(x, y, label = grob, vp.width = width, vp.height = height)
             ) +
-  scale_y_continuous(name='canopy height (m)',breaks=c(0:10)) +
+  scale_y_continuous(name='canopy height (m)',breaks=c(0:25)*5) +
   scale_x_continuous(breaks=c(0:25)*5) +
-  coord_cartesian(ylim = c(0,10), xlim = c(0,50), expand = F)+
+  coord_cartesian(ylim = c(0,50), xlim = c(0,50), expand = F)+
   theme_bw(12)
 
 
