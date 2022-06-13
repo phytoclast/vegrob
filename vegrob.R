@@ -136,8 +136,8 @@ make.stratum <- function(veg.grob, tree.height, branch.height, crown.width, diam
 
 scale.exponent = 0.5 
 tree.height=30
-branch.height=20
-crown.width=15
+branch.height=15
+crown.width=20
 diameter=35
 form.choice = 'D'
 
@@ -217,26 +217,33 @@ rm(tree1,tree2,tree3,tree4)
 
 
 
+convert.SVG <- function(filename){
+  
+  blob <- svgparser::read_svg(filename, obj_type = 'data.frame')
+  
+  blob$x <- (blob$x - min(blob$x)) / (max(blob$x) - min(blob$x)) 
+  blob$y <- 1-1*(blob$y - min(blob$y)) / (max(blob$y) - min(blob$y)) 
+   return(blob)
+  
+}
 
 
-blob <- svgparser::read_svg('blob.svg')
 
-blob2 <- grImport2::grid.picture('blob.svg')
-grid.newpage();grid.draw(blob)
-blob.red <- grid::editGrob(blob, vp = viewport(x=.5,y=.5,width=.15, height=.15), gp = gpar(col="black", alpha=0.5))
+blob <- convert.SVG('blob.svg')
+trunk <- convert.SVG('trunk.svg')
+palm <- convert.SVG('palm.svg')
 
-blob.red <- svgparser::read_svg('blob.svg', style_default = list(fill = 'red'))
-grid.newpage();grid.draw(blob.red)
+g.D.crown <- polygonGrob(x=(blob$x*crn.wd)+crn.wd/2, 
+                         y=((blob$y*(1-crn.ht))+crn.ht)^scxp, gp=gpar(fill=use.color,alpha=0.5))
+g.trunk <- polygonGrob(x=trunk$x*tree.wd/0.8+crn.wd, 
+                       y=(trunk$y*crn.ht)^0.5, gp=gpar(fill='brown'))
+g.tree <- grobTree(g.D.crown, g.trunk)
+grid.newpage();grid.draw(g.tree)
 
 
 
-blob <- svgparser::read_svg('blob.svg', obj_type = 'data.frame')
 
-blob.x <- (blob$x - min(blob$x)) / (max(blob$x) - min(blob$x)) 
-blob.y <- 1-1*(blob$y - min(blob$y)) / (max(blob$y) - min(blob$y)) 
-g.D.crown <- polygonGrob(x=blob.x, 
-                         y=blob.y*.25+.75, gp=gpar(fill='green',alpha=0.5))
-grid.newpage();grid.draw(g.D.crown)
+
 
 make.tree <- function(tree.height, branch.height, crown.width, diameter,form.choice,scale.exponent){
   #form.choice='E'
@@ -253,8 +260,8 @@ make.tree <- function(tree.height, branch.height, crown.width, diameter,form.cho
   g.E.crown <- polygonGrob(x=c(0.5-crn.wd/2, 0.5, 0.5+crn.wd/2), 
                            y=c(crn.ht, tree.ht, crn.ht)^scxp, gp=gpar(fill=use.color,alpha=0.5))
   
-  g.D.crown <- polygonGrob(x=(blob.x*crn.wd)+crn.wd/2, 
-                           y=((blob.y*(1-crn.ht))+crn.ht)^scxp, gp=gpar(fill=use.color,alpha=0.5))
+  g.D.crown <- polygonGrob(x=(blob$x*crn.wd)+crn.wd/2, 
+                           y=((blob$y*(1-crn.ht))+crn.ht)^scxp, gp=gpar(fill=use.color,alpha=0.5))
   
   g.Ds.crown <- polygonGrob(x=c(-1,
                                 -0.9,
@@ -279,9 +286,8 @@ make.tree <- function(tree.height, branch.height, crown.width, diameter,form.cho
                                  0.5,
                                  0)*.67+0.33)^scxp, gp=gpar(fill=use.color,alpha=0.5))
   
-  
-  
-  g.trunk <- rectGrob(x=0.5, y=((crn.ht-0)^scxp)/2, width=tree.wd, height=(crn.ht-0)^scxp, gp=gpar(fill='brown'))
+  g.trunk <- polygonGrob(x=trunk$x*tree.wd/0.8+crn.wd, 
+                         y=(trunk$y*crn.ht)^scxp, gp=gpar(fill='brown'))
   
   g.stems <- polygonGrob(x=c(-0.075,-0.13,-0.12,-0.025,-0.005,0.005,0.025,0.12,0.13,0.075)+0.5, 
                          y=(c(0,1,1,0,1,1,0,1,1,0)*0.33)^scxp, gp=gpar(fill='brown'))
