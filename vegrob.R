@@ -135,8 +135,22 @@ make.stratum <- function(veg.grob, tree.height, branch.height, crown.width, diam
 
 
 scale.exponent = 0.5 
+#strat0 ----
+tree.height=45
+branch.height=25
+crown.width=20
+diameter=120
+form.choice = 'E'
+
+total.cover = 0.7
+
+tree0 <- make.tree(tree.height, branch.height, crown.width, diameter,form.choice,scale.exponent)
+grid.newpage()
+grid.draw(tree0)
+stratum0 <- make.stratum(tree0, tree.height, branch.height, crown.width, diameter, scale.exponent)
+#strat1 ----
 tree.height=30
-branch.height=15
+branch.height=10
 crown.width=20
 diameter=35
 form.choice = 'D'
@@ -185,9 +199,9 @@ tree4 <- make.tree(tree.height, branch.height, crown.width, diameter,form.choice
 
 stratum4 <- make.stratum(tree4, tree.height, branch.height, crown.width, diameter, scale.exponent)
 
-all.strata <- rbind(stratum1,stratum2,stratum3,stratum4)
+all.strata <- rbind(stratum0,stratum1,stratum2,stratum3,stratum4)
 
-
+all.strata <- all.strata[sample(1:nrow(all.strata),133),]
 
 
 if(scale.exponent <=0.7){
@@ -206,9 +220,6 @@ ggplot() +
   scale_x_continuous(breaks=c(0:25)*5) +
   coord_fixed(ratio = 50/50^scale.exponent, ylim = c(0,50^scale.exponent), xlim = c(0,50), expand = F)+
   theme_bw(12)
-
-rm(tree1,tree2,tree3,tree4)
-
 
 
 
