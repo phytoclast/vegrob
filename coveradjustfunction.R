@@ -108,6 +108,9 @@ ggplot()+
 neff <- function(x) {
   1/sum((x/sum(x))^2)
 }
+xneff <- function(x) {
+  1/sum((x)^2)
+}
 peff <- function(x) {
   1-mean(1-x)
 }
@@ -116,22 +119,57 @@ agcov <- function(x){
   1-(exp(sum(log(1-x))))
 }
 
-
-x=c(0.5,0.25,0.01,0.01,0.01)
-n=neff(x)
-x1 = 1-(1-agcov(x))^(1/n)
-c = (1-(1-x1)^n)
-fc=0.9
-f = fc/c
-p = (1-(1-(1-(1-x1)^n)*f)^1/n)/x1
+#----
 
 
-(1-(1-x1*p)^n) = (1-(1-x1)^n)*f
-1-(1-x1*p)^n = fc
-(1-x1*p)^n = 1-fc
-x1*p = 1-(1-fc)^(1/n)
-p = (1-(1-fc)^(1/n))/x1
+x=c(0.89,0.2,0.1)
 
-1-x1*p = log(1-(1-(1-x1)^n)*f)/log(n)
-x1*p = 1-log(1-(1-(1-x1)^n)*f)/log(n)
-p = (1-log(1-(1-(1-x1)^n)*f)/log(n))/x1
+neff(x)
+xneff(x)
+1/neff(x)
+agcov(x)
+d=0.2
+f = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(x))^(1/neff(x))))+0)/1
+f
+xf = x*f
+xf = xf/max(1,(max(xf)))
+#xf = 1-(1-x)/f
+xf
+agcov(xf)
+ff = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(xf))^(1/neff(x))))+1)/2
+ff
+xff =  xf*ff
+xff = xff/max(1,(max(xff)))
+xff
+agcov(xff)
+fff = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(xff))^(1/neff(x))))+1)/2
+fff
+xfff =  xff*fff
+xfff = xfff/max(1,(max(xfff)))
+xfff
+agcov(xfff)
+ffff = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(xfff))^(1/neff(x))))+1)/2
+ffff
+xffff =  xfff*ffff
+xffff = xffff/max(1,(max(xffff)))
+xffff
+agcov(xffff)
+
+
+
+
+
+
+
+
+ff = log(1-d)/log(1-agcov(x))
+xff = 1-exp(ff*log(1-x))
+xff
+agcov(xff)
+xff/x
+
+
+
+c*d = a*b*f
+c*d = a*b*f
+
