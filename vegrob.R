@@ -133,6 +133,31 @@ make.stratum <- function(veg.grob, tree.height, branch.height, crown.width, diam
   return(grobs.tb)
 }
 
+get.crown.diam.ratio <- function(cover, dbh, ba, baf=10){
+  #cover = aggregate overstory cover
+  #diam = stand quadratic mean diameter
+  #ba = stand basal area count
+  #baf = basal area factor
+  if(baf %in% c(5,10,20,40)){#legacy basal area units
+    fba = baf*ba
+    actoha = 43560*0.3048^2/10000
+    ft2tom2 = 0.3048^2
+    mba = fba*ft2tom2/actoha
+  }
+  if(is.na(baf)|baf==2){#metric basal area units
+    mba = ba*baf
+  }
+  m2pertree = 3.141592*(dbh/200)^2
+  treesperha = mba/m2pertree
+  coverpertreeperha = 1-(1-cover)^(1/treesperha)
+  crown.width = 2*(coverpertreeperha*10000/3.141592)^0.5
+  crown.width
+  crown.stem.ratio = crown.width/dbh*100
+  return(crown.stem.ratio)#crown stem ratio meter per meter
+}
+
+get.crown.diam.ratio(0.8,15,10)
+get.crown.diam.ratio(cover=0.8,dbh=15,ba=5,baf=10)
 
 scale.exponent = 0.5 
 #strat0 ----
