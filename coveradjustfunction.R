@@ -108,8 +108,8 @@ ggplot()+
 neff <- function(x) {
   1/sum((x/sum(x))^2)
 }
-xneff <- function(x) {
-  1/sum((x)^2)
+qmean <- function(x) {
+  mean(x^2)^0.5
 }
 peff <- function(x) {
   1-mean(1-x)
@@ -122,20 +122,47 @@ agcov <- function(x){
 #----
 
 
-x=c(0.89,0.2,0.1)
+x=c(0.8,0.2,0.1)
 
 neff(x)
-xneff(x)
+qmean(x)
 1/neff(x)
 agcov(x)
-d=0.2
-f = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(x))^(1/neff(x))))+0)/1
-f
+d=0.99
+f0 = (1-((1-d)^(1/neff(x))))/(1-((1-agcov(x))^(1/neff(x))))
+#f = d/agcov(x)
+f = (d/agcov(x))^1.5
+x*f0
 xf = x*f
-xf = xf/max(1,(max(xf)))
+xf
+#xf = xf/max(1,(max(xf)))*0.95
 #xf = 1-(1-x)/f
+xf = pmin(xf,0.99)
 xf
 agcov(xf)
+
+ff = log(1-d)/log(1-agcov(xf))
+xff = 1-exp(ff*log(1-xf))
+xff
+agcov(xff)
+
+
+ff2 = log(1-d)/log(1-agcov(x))
+xff2 = 1-exp(ff2*log(1-x))
+
+agcov(xff2)
+xff2
+x/max(x)
+xf/max(xf)
+xff/(max(xff))
+xff2/(max(xff2))
+
+
+
+
+
+
+
 ff = ((1-((1-d)^(1/neff(x))))/(1-((1-agcov(xf))^(1/neff(x))))+1)/2
 ff
 xff =  xf*ff
@@ -159,17 +186,49 @@ agcov(xffff)
 
 
 
+f10 = 7
+fba = 10*f10
+actoha = 43560*0.3048^2/10000
+ft2tom2 = 0.3048^2
+mba = fba*ft2tom2/actoha
+
+diam = 35
+m2pertree = 3.141592*(diam/200)^2
+treesperha = mba/m2pertree
+cover = 0.8
+coverpertree = 1-(1-cover)^0.5
+coverpertree
+areapertree = coverpertree*10000/treesperha
+crown.width = (areapertree/3.141592)^0.5*2
+crown.width
+crown.stem.ratio = crown.width/diam*100
+crown.stem.ratio
+
+(areapertree/m2pertree)^0.5
 
 
 
-ff = log(1-d)/log(1-agcov(x))
-xff = 1-exp(ff*log(1-x))
-xff
-agcov(xff)
-xff/x
+crown.width=11.1
+
+coverpertreeperha = (crown.width/2)^2*3.141892/10000
+coverperha = 1-(1-coverpertreeperha)^treesperha
+coverperha
+
+coverperha = 1-(1-coverpertreeperha)^treesperha
+1-coverperha = (1-coverpertreeperha)^treesperha
+(1-coverperha)^(1/treesperha) = (1-coverpertreeperha)
+coverpertreeperha = 1-(1-coverperha)^(1/treesperha)
 
 
+coverpertreeperha = (crown.width/2)^2*3.141892/10000
+coverpertreeperha*10000/3.141592 = (crown.width/2)^2
+(coverpertreeperha*10000/3.141592)^0.5 = (crown.width/2)
+crown.width = 2*(coverpertreeperha*10000/3.141592)^0.5
 
-c*d = a*b*f
-c*d = a*b*f
-
+cover = 0.8
+treesperha
+coverpertreeperha = 1-(1-cover)^(1/treesperha)
+crown.width = 2*(coverpertreeperha*10000/3.141592)^0.5
+crown.width
+crown.stem.ratio = crown.width/diam*100
+crown.stem.ratio
