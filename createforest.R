@@ -5,16 +5,17 @@ library(vegnasis)
 
 
 x = (1:100)
-y = (1:100)
+y = (1:116)
 set.seed(42)
-scramble = data.frame(rx=runif(100*100)*0.5-0.5/2,ry = runif(100*100)*0.5-0.5/2)
 
 
 m <- merge(x,y) |> as.data.frame()
-m <- m |> cbind(scramble)
-m <- m |> mutate(x=x+rx, y=y+ry, rx=NULL, ry=NULL)
-n=250
-s <- m[sample(1:10000, n, replace = F),] |> mutate(z = rnorm(n)*0+5)
+m <- m |> mutate(x = ifelse(floor(y/2)==y/2, x-0.5,x), y = y*(3^0.5)/2)
+#  scramble = data.frame(rx=runif(100*116)*0.5-0.5/2,ry = runif(100*116)*0.5-0.5/2)
+# m <- m |> cbind(scramble)
+# m <- m |> mutate(x=x+rx, y=y+ry, rx=NULL, ry=NULL)
+n=200
+s <- m[sample(1:11600, n, replace = F),] |> mutate(z = rnorm(n)*1+5)
 s <- st_as_sf(x = s, coords = c('x', 'y'))
 r <- rast(xmin = 0, xmax = 100, ymin = 0, ymax = 100, resolution = c(0.1,0.1))
 buf <- sf::st_buffer(s, dist=s$z)
