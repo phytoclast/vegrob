@@ -2,6 +2,21 @@ library(sf)
 library(terra)
 library(vegnasis)
 
+veg <- clean.veg.log(obs, obsspp)
+
+veg <- veg |> mutate(taxon=harmonize.taxa(veg$taxon, fix=T)) |> fill.type.df() |> fill.nativity.df() |> mutate(symbol = fill.usda.symbols(taxon)) |> fill.hts.df()
+forest <-  veg |> mutate(h = ifelse(diam > 0 & BA > 0, ht.max, NA),
+                         d = ifelse(diam > 0 & BA > 0, diam, NA),
+                         b = ifelse(diam > 0 & BA > 0, BA, NA)) |>
+  group_by(plot) |> filter(ht.max > 5) |>
+  summarise(cover = cover.agg(cover), BA = sum(BA, na.rm = T),
+            h=sum(h*b, na.rm = T), d=sum(d*b, na.rm = T), b=sum(b, na.rm = T)) |> mutate(BA = ifelse(BA > 0, BA, NA),
+                                                                                         ht = ifelse(b == 0, NA, h/b),
+                                                                                         diam = ifelse(b == 0, NA, d/b),
+                                                                                         h = NULL, d = NULL, b=NULL)
+df <- veg |> subset(!is.na(BA) & !is.na(cover) & !is.na(diam))
+
+df <- df |> mutate(dens = BA/(3.141592*(diam/200)^2), crwd = 2*((1-(1-cover/100)^(1/dens))*10000/3.141592)^0.5)
 
 
 x = (1:100)
