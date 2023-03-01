@@ -1,6 +1,8 @@
 library(sf)
 library(terra)
 library(vegnasis)
+library(ggplot2)
+
 
 veg <- clean.veg.log(obs, obsspp)
 
@@ -14,11 +16,28 @@ forest <-  veg |> mutate(h = ifelse(diam > 0 & BA > 0, ht.max, NA),
                                                                                          ht = ifelse(b == 0, NA, h/b),
                                                                                          diam = ifelse(b == 0, NA, d/b),
                                                                                          h = NULL, d = NULL, b=NULL)
-df <- veg |> subset(!is.na(BA) & !is.na(cover) & !is.na(diam))
+df <- bind_rows(forest, veg) |> subset(!is.na(BA) & !is.na(cover) & !is.na(diam) )
+df <- df |> mutate(dens = BA/(3.141592*(diam/200)^2), crwd = 2*((1-(1-cover/100)^(1/dens))*10000/3.141592)^0.5) 
 
-df <- df |> mutate(dens = BA/(3.141592*(diam/200)^2), crwd = 2*((1-(1-cover/100)^(1/dens))*10000/3.141592)^0.5)
-
-
+   
+  x <- df$diam
+  y <- df$crwd
+  mod1 <- minpack.lm::nlsLM(y ~ b1*(1-exp(b2*x))^(b3) , start = list(b1=30, b2=-1, b3=1))
+  summary(mod1)
+  b1 = 35.992276
+  b2 = -0.017343
+  b3 = 1.818346
+  y1 <- b1*(1-exp(b2*x))^(b3)
+  
+ ggplot()+
+   geom_smooth(aes(x=x, y=y), col='black')+
+   geom_smooth(aes(x=x, y=y1), col='red')
+   
+  
+  
+  
+  
+#scatter plot of trees
 x = (1:100)
 y = (1:116)
 set.seed(42)
