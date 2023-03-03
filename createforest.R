@@ -79,8 +79,9 @@ df <- df |> mutate(dens = BA/(3.141592*(diam/200)^2), crwd = 2*((1-(1-cover/100)
    geom_line(data=df, aes(x=sp, y=final), col='red')
 
 #scatter plot loops to semi-random establish even spaced trees to determing deviation from random cover.
-x = (1:100)
-y = (1:116)
+scl=3 #scale larger
+x = (1:(100*scl))
+y = (1:(116*scl))
 set.seed(42)
 
 
@@ -90,29 +91,29 @@ m <- m |> mutate(x = ifelse(floor(y/2)==y/2, x-0.5,x), y = round(y*(3^0.5)/2,2),
 r = 5
 pref = 3
 f=pref
-mx1 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx1 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100*scl & y <= 100*scl)
 f = pref^2
-mx2 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx2 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100*scl & y <= 100*scl)
 f = pref^3
-mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100*scl & y <= 100*scl)
 mm <- rbind(m,mx1,mx2,mx3) |> group_by(x,y) |> summarise(wt=max(wt)) |> as.data.frame()
 
 rownames(mm) <- 1:nrow(mm) |> as.numeric()
-nums <- c(1:4, (1:100)*5)
+nums <- c(1:4, (1:100)*5)*scl^2
 
-for (i in nums){
-n=i
+for (i in 1:length(nums)){
+n=nums[i]
 area = 3.141592*r^2
-s <- mm[sample(1:11600, n, replace = F, prob = mm$wt^5*1+0),] |> mutate(z = (pmax(1,rnorm(n)*0.00*area+area)/3.141592)^0.5)
+s <- mm[sample(1:(11600*scl^2), n, replace = F, prob = mm$wt^5*1+0),] |> mutate(z = (pmax(1,rnorm(n)*0.00*area+area)/3.141592)^0.5)
 s <- st_as_sf(x = s, coords = c('x', 'y'))
-rst <- rast(xmin = 0, xmax = 100, ymin = 0, ymax = 100, resolution = c(0.1,0.1))
+rst <- rast(xmin = 0, xmax = 100*scl, ymin = 0, ymax = 100*scl, resolution = c(0.1,0.1))
 buf <- sf::st_buffer(s, dist=s$z)
 rbuf <- rasterize(buf, rst, values=1)
 rbuf <- ifel(is.na(rbuf), 0,1)
-df <- as.data.frame(rbuf)
-actual = mean(df$layer)*100
-potential <- n*(3.141592*r^2)/(100^2)*100
-aggformula <- (1-(1-1*(3.141592*r^2)/(100^2))^n)*100
+rbuf.df <- as.data.frame(rbuf)
+actual = mean(rbuf.df$layer)*100
+potential <- n*(3.141592*r^2)/((100*scl)^2)*100
+aggformula <- (1-(1-1*(3.141592*r^2)/((100*scl)^2))^n)*100
 covtab0 <- data.frame(n=n,potential=potential,aggformula=aggformula,actual=actual)
 if(i==1){covtab <- covtab0}else{covtab <- rbind(covtab,covtab0)}
 }
@@ -154,18 +155,58 @@ ggplot()+
   scale_x_continuous(breaks=c(0:30)*50, minor_breaks = c(0:30)*10)+
   scale_y_continuous(breaks=c(0:30)*50, minor_breaks = c(0:30)*10)
 
-x=df$potential
-y=df$aggformula
+x=cov1$potential
+y=cov1$aggformula
 mod1 <- minpack.lm::nlsLM(y ~ b1*(1-exp(b2*x))^(b3) , start = list(b1=100, b2=-1, b3=1))
 summary(mod1)
-
+# Formula: y ~ b1 * (1 - exp(b2 * x))^(b3)
+#
+# Parameters:
+#   Estimate Std. Error    t value Pr(>|t|)
+#   b1  1.000e+02  2.476e-15  4.038e+16   <2e-16 ***
+#   b2 -1.000e-02  1.479e-18 -6.765e+15   <2e-16 ***
+#   b3  1.000e+00  1.281e-16  7.807e+15   <2e-16 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+# Residual standard error: 8.095e-15 on 101 degrees of freedom
+#
+# Number of iterations to convergence: 12
+# Achieved convergence tolerance: 1.49e-08
+x=cov1$potential
+y=cov1$actual
+mod1 <- minpack.lm::nlsLM(y ~ b1*(1-exp(b2*x))^(b3) , start = list(b1=100, b2=-1, b3=1))
+# summary(mod1)
+# Formula: y ~ b1 * (1 - exp(b2 * x))^(b3)
+#
+# Parameters:
+#   Estimate Std. Error t value Pr(>|t|)
+#   b1  1.003e+02  3.369e-01  297.58   <2e-16 ***
+#   b2 -2.462e-02  7.859e-04  -31.33   <2e-16 ***
+#   b3  2.023e+00  9.846e-02   20.55   <2e-16 ***
+#   ---
+#   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#
+# Residual standard error: 2.381 on 101 degrees of freedom
+#
+# Number of iterations to convergence: 13
+# Achieved convergence tolerance: 1.49e-08
+#
 #many iterations of small area species is the same as small crowns randomly overlapping.
 #The most evenly distributed crowns shows an intermediate cover between aggregate formula and simple summation of cover values until it converges with 100%.
 #Introduction of any variability in crown width or relaxing of weights towards even distribution will quickly reduce the total cover to the same as the random formula.
 
+  # b1 = 1.003e+02
+  # b2 = -2.462e-02
+  # b3 = 2.023e+00
+  # y = b1 * (1 - exp(b2 * x))^(b3)
+cov1 <- cov1 |> mutate(ratio = actual/potential)
+ggplot()+
+  geom_line(data = cov1, aes(x=potential, y=ratio))
 #scatter plot of trees
-x = (1:100)
-y = (1:116)
+scl=4#scale
+x = (1:(100*scl))
+y = (1:(116*scl))
 set.seed(42)
 
 
@@ -175,21 +216,21 @@ m <- m |> mutate(x = ifelse(floor(y/2)==y/2, x-0.5,x), y = round(y*(3^0.5)/2,2),
 r = 5
 pref = 3
 f=pref
-mx1 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx1 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=(100*scl) & y <= (100*scl))
 f = pref^2
-mx2 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx2 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=(100*scl) & y <= (100*scl))
 f = pref^3
-mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=100 & y <= 100)
+mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f)  |> subset(x <=(100*scl) & y <= (100*scl))
 mm <- rbind(m,mx1,mx2,mx3) |> group_by(x,y) |> summarise(wt=max(wt)) |> as.data.frame()
 
 rownames(mm) <- 1:nrow(mm) |> as.numeric()
 
 n=100
 area = 3.141592*r^2
-s <- mm[sample(1:11600, n, replace = F, prob = mm$wt^3),] |> mutate(z = ((rnorm(n)*0.33*area+area)/3.141592)^0.5)
+s <- mm[sample(1:(11600*4*4), n, replace = F, prob = mm$wt^3),] |> mutate(z = ((rnorm(n)*0.33*area+area)/3.141592)^0.5)
 s1=s
 s <- st_as_sf(x = s, coords = c('x', 'y'))
-rst <- rast(xmin = 0, xmax = 100, ymin = 0, ymax = 100, resolution = c(0.1,0.1))
+rst <- rast(xmin = 0, xmax = (100*scl), ymin = 0, ymax = (100*scl), resolution = c(0.1,0.1))
 buf <- sf::st_buffer(s, dist=s$z)
 rbuf <- rasterize(buf, rst, values=1)
 
