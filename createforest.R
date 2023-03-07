@@ -195,11 +195,34 @@ mod1 <- minpack.lm::nlsLM(y ~ b1*(1-exp(b2*x))^(b3) , start = list(b1=100, b2=-1
 #many iterations of small area species is the same as small crowns randomly overlapping.
 #The most evenly distributed crowns shows an intermediate cover between aggregate formula and simple summation of cover values until it converges with 100%.
 #Introduction of any variability in crown width or relaxing of weights towards even distribution will quickly reduce the total cover to the same as the random formula.
+x <- c(1:4,(1:60)*5) 
+x <- data.frame(x=x)
+p1 = 1.000e+02
+p2 = -1.000e-02
+p3 = 1.000e+00
 
-  # b1 = 1.003e+02
-  # b2 = -2.462e-02
-  # b3 = 2.023e+00
-  # y = b1 * (1 - exp(b2 * x))^(b3)
+b1 = 1.003e+02
+b2 = -2.462e-02
+b3 = 2.023e+00
+x <- x |> mutate(y1 = p1 * (1 - exp(p2 * x))^(p3),
+                 y2 = b1 * (1 - exp(b2 * x))^(b3),
+                 y3 = 100*(y1/100)^(y1/x),
+                 y4 = 100*(x/(100+x))^0.5,
+                 x1 = pmin(x,100))
+
+
+ggplot()+
+  geom_line(data=x, aes(x=x, y=x1),col='black')+
+  geom_line(data=x, aes(x=x, y=y1),col='red')+
+  geom_line(data=x, aes(x=x, y=y2),col='green')+
+  geom_line(data=x, aes(x=x, y=y4),col='blue')
+
+
+
+
+
+
+
 cov1 <- cov1 |> mutate(ratio = actual/potential)
 ggplot()+
   geom_line(data = cov1, aes(x=potential, y=ratio))
