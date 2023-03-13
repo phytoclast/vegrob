@@ -146,7 +146,7 @@ df <- df |> mutate(potential=interations*(gmcover), aggformula= (1-(1-1*gmcover/
 ggplot()+
   geom_line(data=subset(df, interations == 1), aes(x=potential, y=aggformula),col='black')+
   geom_line(data=subset(df, interations == 2), aes(x=potential, y=aggformula),col='red')+
-  geom_line(data=subset(df, interations == 3), aes(x=potential, y=aggformula),col='yellow')+
+  #geom_line(data=subset(df, interations == 3), aes(x=potential, y=aggformula),col='yellow')+
   geom_line(data=subset(df, interations == 5), aes(x=potential, y=aggformula),col='green')+
   geom_line(data=subset(df, interations == 10), aes(x=potential, y=aggformula), col='blue')+
   geom_line(data=subset(df, interations == 50), aes(x=potential, y=aggformula), col='purple')+
@@ -195,7 +195,7 @@ mod1 <- minpack.lm::nlsLM(y ~ b1*(1-exp(b2*x))^(b3) , start = list(b1=100, b2=-1
 #many iterations of small area species is the same as small crowns randomly overlapping.
 #The most evenly distributed crowns shows an intermediate cover between aggregate formula and simple summation of cover values until it converges with 100%.
 #Introduction of any variability in crown width or relaxing of weights towards even distribution will quickly reduce the total cover to the same as the random formula.
-x <- c(1:4,(1:60)*5) 
+x <- c(1:4,(1:60)*5)
 x <- data.frame(x=x)
 p1 = 1.000e+02
 p2 = -1.000e-02
@@ -204,18 +204,40 @@ p3 = 1.000e+00
 b1 = 1.003e+02
 b2 = -2.462e-02
 b3 = 2.023e+00
+s=1/3
 x <- x |> mutate(y1 = p1 * (1 - exp(p2 * x))^(p3),
                  y2 = b1 * (1 - exp(b2 * x))^(b3),
                  y3 = 100*(y1/100)^(y1/x),
-                 y4 = 100*(x/(100+x))^0.5,
-                 x1 = pmin(x,100))
+                 x1 = pmin(x,100),
+                 y4 = y1*s+x1*(1-s))
 
+df2 <- df |> subset(interations == 10) |> mutate(newform = pmin(100, potential)*(1-s)+aggformula*s,
+                                                 newform2 = pmin(100, potential*0.85))
 
 ggplot()+
-  geom_line(data=x, aes(x=x, y=x1),col='black')+
-  geom_line(data=x, aes(x=x, y=y1),col='red')+
-  geom_line(data=x, aes(x=x, y=y2),col='green')+
-  geom_line(data=x, aes(x=x, y=y4),col='blue')
+  geom_line(data=x, aes(x=x, y=x1, col='Minimal overlap (sums to a max of 100)'), size=1)+
+  geom_line(data=subset(df, interations == 50), aes(x=potential, y=aggformula, col='50 taxa'), size=1)+
+  geom_line(data=subset(df, interations == 10), aes(x=potential, y=aggformula, col='10 taxa'), size=1)+
+  geom_line(data=subset(df, interations == 5), aes(x=potential, y=aggformula, col='5 taxa'), size=1)+
+  geom_line(data=subset(df, interations == 2), aes(x=potential, y=aggformula, col='2 taxa'), size=1)+
+  geom_line(data=cov1, aes(x=potential, y=actual, col='Simulated Crowns with minimal overlap'), size=1)+
+  geom_line(data=df2, aes(x=potential, y=newform, col='1/3 (10 taxa) + 2/3(Minimal overlap)'), size=1)+
+
+  coord_cartesian(xlim = c(0,200),ylim = c(0,120))+
+  scale_x_continuous(name='sum of cover',breaks=c(0:30)*50, minor_breaks = c(0:30)*10)+
+  scale_y_continuous(name='aggregated cover',breaks=c(0:30)*50, minor_breaks = c(0:30)*10)+
+   #theme(legend.position = c(0, 1),legend.justification = c(0, 1))+
+  scale_colour_manual(values = c(
+      "Minimal overlap (sums to a max of 100)" = "black",
+      "50 taxa"="pink",
+      "10 taxa"="red",
+      "5 taxa"="green",
+      "2 taxa"="blue",
+      "Simulated Crowns with minimal overlap" = "orange",
+      "1/3 (10 taxa) + 2/3(Minimal overlap)" = "brown"))
+
+
+
 
 
 
@@ -248,9 +270,9 @@ mm <- rbind(m,mx1,mx2,mx3) |> group_by(x,y) |> summarise(wt=max(wt)) |> as.data.
 
 rownames(mm) <- 1:nrow(mm) |> as.numeric()
 
-n=100
+n=1500
 area = 3.141592*r^2
-s <- mm[sample(1:(11600*4*4), n, replace = F, prob = mm$wt^3),] |> mutate(z = ((rnorm(n)*0.33*area+area)/3.141592)^0.5)
+s <- mm[sample(1:(11600*4*4), n, replace = F, prob = mm$wt^5),] |> mutate(z = ((rnorm(n)*0*area+area)/3.141592)^0.5)
 s1=s
 s <- st_as_sf(x = s, coords = c('x', 'y'))
 rst <- rast(xmin = 0, xmax = (100*scl), ymin = 0, ymax = (100*scl), resolution = c(0.1,0.1))
@@ -264,13 +286,13 @@ plot(s, col='black', add = TRUE)
 df <- as.data.frame(rbuf)
 mean(df$layer)
 
-n*(3.141592*r^2)/(100^2)
-1-(1-1*(3.141592*r^2)/(100^2))^n
+n*(3.141592*r^2)/(400^2)
+1-(1-1*(3.141592*r^2)/(400^2))^n
 mean(s$wt)
 
 
 ggplot()+
-  geom_point(data = mm, aes(x=x,y=y,size=wt))
+  geom_point(data = subset(mm, x<100 & y<100), aes(x=x,y=y,size=wt))
 
 
 
