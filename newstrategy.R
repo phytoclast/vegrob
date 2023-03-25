@@ -25,7 +25,7 @@ make_hex_stand <- function(hects=1, minsize=1){
 }
 
 stand <- make_hex_stand(0.5,1)
-stand1 <- subset(stand, z >= 20 & z < 30)
+stand1 <- subset(stand, z >= 15 & z < 45)
 stumps <- stand1[sample(row.names(stand1),size = 50,prob = stand1$wt),]
 
 ggplot()+
@@ -63,7 +63,7 @@ dome <- data.frame(x=c(-1,
                         0.9,
                         0.7,
                         0.5,
-                        0)), name='dome')
+                        0)), name='dome', fill='green', color='darkgreen')
 sticks <- data.frame(x=c(-0.075,-0.13,-0.12,-0.025,-0.005,0.005,0.025,0.12,0.13,0.075),y=c(0,1,1,0,1,1,0,1,1,0), name='sticks', fill='orange', color='brown')
 
 
@@ -85,24 +85,28 @@ crwd = 2
 dbh = 30
 
 make_B_tree <- function(ht.max, ht.min,crwd,dbh){
-  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
+  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min)
+  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) 
   tree = rbind(crown, base)
+  tree$ptord <- rownames(tree) |> as.numeric()
   return(tree)}
 make_shrub <- function(ht.max, ht.min,crwd){
-  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
+  crown <- dome |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
   base <- sticks |> mutate(x=x*crwd*0.8, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
+  tree$ptord <- rownames(tree) |> as.numeric()
   return(tree)}
 make_palm <- function(ht.max, ht.min,crwd,dbh){
   crown <- palm |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
   base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
+  tree$ptord <- rownames(tree) |> as.numeric()
   return(tree)}
 make_N_tree <- function(ht.max, ht.min,crwd,dbh){
   crown <- triangle |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
   base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
+  tree$ptord <- rownames(tree) |> as.numeric()
   return(tree)}
 
 tree <- make_B_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30) 
@@ -116,15 +120,31 @@ stumps2 <- stand1[sample2,]
 stumps1a <- data.frame(id=rownames(stumps1), xp=stumps1$x, z=stumps1$z)
 stumps2a <- data.frame(id=rownames(stumps2), xp=stumps2$x, z=stumps2$z)
 
-trees <- merge(stumps1a, tree) |> mutate(xn = x+xp) |> arrange(z)
-shrubs <- merge(stumps2a, shrub) |> mutate(xn = x+xp) |> arrange(z)
-both <- rbind(trees, shrubs)
-both <- both[order(both$z),]
+
+trees <- merge(stumps1a, tree) 
+shrubs <- merge(stumps2a, shrub) 
+plants <- rbind(trees, shrubs)
+
+plants <- plants |> group_by(id) |> 
+  mutate(ht.max = max(y), crwd = max(x)-min(x),
+         xpp = xp + runif(1, min = -0.5, max = 0.5),
+         yr = rnorm(1,ht.max, ht.max/5)/ht.max,
+         xr = rnorm(1,ht.max, ht.max/5)/ht.max+rnorm(1,crwd, crwd/5)/crwd,
+         xn = x*xr+xpp,
+         yn = y*yr)
+
+plants <- plants |> arrange(id, name, ptord, z)
+zmax <- max(plants$z)
+zmin <- min(plants$z)
+zwid <- zmax-zmin
+plants1 <- plants |> subset(z < zmin+zwid/3)
+plants2 <- plants |> subset(z < zmax-zwid/3 & z >= zmin+zwid/3)
+plants3 <- plants |> subset(z >= zmax-zwid/3)
 
 ggplot() +
-  geom_polygon(data=both, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
-  # geom_polygon(data=trees, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
-  # geom_polygon(data=shrubs, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  geom_polygon(data=plants1, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  geom_polygon(data=plants2, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  geom_polygon(data=plants3, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
   scale_fill_manual(values=c('green','orange'))+
   scale_color_manual(values=c('brown','darkgreen'))+
   theme(legend.position = "none", 
@@ -137,5 +157,6 @@ ggplot() +
                                         colour = rgb(0.1, 0.1, 0.1, 0.1))
   )+
   coord_fixed(ratio = 1)+
-  scale_y_continuous(trans='identity', breaks = c(-1:(120/5))*5,minor_breaks = c(-1:(120)), limits = c(0,50))+
-  scale_x_continuous(breaks = c(-1:(120/5))*5, minor_breaks = c(-1:(120)), limits = c(-5,55))
+  scale_y_continuous(trans='identity', breaks = c(-10:(120/5))*5,minor_breaks = c(-10:(120)), limits = c(0,50))+
+  scale_x_continuous(breaks = c(-10:(120/5))*5, minor_breaks = c(-10:(120)), limits = c(-5,55))
+
