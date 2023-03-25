@@ -3,6 +3,41 @@ library(ggplot2)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
+make_hex_stand <- function(hects=1, minsize=1){
+  #scale larger
+  x = (1:(100*hects))
+  y = (1:(116*hects))
+  set.seed(42)
+  m <- merge(x,y) |> as.data.frame()
+  m <- m |> mutate(x = ifelse(floor(y/2)==y/2, x-0.5,x), y = round(y*(3^0.5)/2,2), wt=1)
+  pref=3
+  f= pref^1
+  mx1 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f^2)  |> subset(x <=100*hects & y <= 100*hects)
+  f = pref^2
+  mx2 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f^2)  |> subset(x <=100*hects & y <= 100*hects)
+  f = pref^3
+  mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f^2)  |> subset(x <=100*hects & y <= 100*hects)
+  mm <- rbind(m,mx1,mx2,mx3) |> group_by(x,y) |> summarise(wt=max(wt)) |> as.data.frame()
+  mm <- mm |> mutate(x = x*minsize, y = y*minsize)
+  colnames(mm) <- c('x','z','wt')
+  rownames(mm) <- 1:nrow(mm) |> as.numeric()
+  return(mm)
+}
+
+stand <- make_hex_stand(0.5,1)
+stand1 <- subset(stand, z >= 20 & z < 30)
+stumps <- stand1[sample(row.names(stand1),size = 50,prob = stand1$wt),]
+
+ggplot()+
+  geom_point(data=stand, aes(x=x,y=z,size=wt), color='white')+
+  geom_point(data=stand1, aes(x=x,y=z), color='pink', size=0.5) +
+  geom_point(data=stumps, aes(x=x,y=z), color='black', size=0.5)+
+  coord_fixed(ratio = 1)
+
+
+
+
+
 blob <- read.csv('blob.csv') |> data.frame(name='blob', fill='green', color='darkgreen')
 palm <- read.csv('palm.csv') |> data.frame(name='palm', fill='green', color='darkgreen')|> mutate(x=round(x,2),y=round(y,2))
 trunk <- read.csv('trunk.csv') |> data.frame(name='trunk', fill='orange', color='brown')|> mutate(x=round(x,2),y=round(y,2))
@@ -50,35 +85,57 @@ crwd = 2
 dbh = 30
 
 make_B_tree <- function(ht.max, ht.min,crwd,dbh){
-  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) |> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) |> data.frame(id=1) 
+  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
+  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
   return(tree)}
 make_shrub <- function(ht.max, ht.min,crwd){
-  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) |> data.frame(id=1)
-  base <- sticks |> mutate(x=x*crwd*0.8, y=y*(ht.min)) |> data.frame(id=2) 
+  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
+  base <- sticks |> mutate(x=x*crwd*0.8, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
   return(tree)}
 make_palm <- function(ht.max, ht.min,crwd,dbh){
-  crown <- palm |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) |> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) |> data.frame(id=2) 
+  crown <- palm |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
+  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
   return(tree)}
 make_N_tree <- function(ht.max, ht.min,crwd,dbh){
-  crown <- triangle |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) |> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) |> data.frame(id=2) 
+  crown <- triangle |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
+  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
   tree = rbind(crown, base)
   return(tree)}
 
-tree <- make_B_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30) |> mutate(x=x+25)
-shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2) |> mutate(x=x+10)
+tree <- make_B_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30) 
+shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2) 
+
+sample1 <- sample(row.names(stand1), size = 20, prob = stand1$wt)
+stand2 <- stand1 |> mutate(wt = ifelse(rownames(stand1) %in% sample1, 0,wt))
+sample2 <- sample(row.names(stand2), size = 20, prob = stand2$wt)
+stumps1 <- stand1[sample1,]
+stumps2 <- stand1[sample2,]
+stumps1a <- data.frame(id=rownames(stumps1), xp=stumps1$x, z=stumps1$z)
+stumps2a <- data.frame(id=rownames(stumps2), xp=stumps2$x, z=stumps2$z)
+
+trees <- merge(stumps1a, tree) |> mutate(xn = x+xp) |> arrange(z)
+shrubs <- merge(stumps2a, shrub) |> mutate(xn = x+xp) |> arrange(z)
+both <- rbind(trees, shrubs)
+both <- both[order(both$z),]
 
 ggplot() +
-  geom_polygon(data=tree, aes(x,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
-  geom_polygon(data=shrub, aes(x,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  geom_polygon(data=both, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  # geom_polygon(data=trees, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
+  # geom_polygon(data=shrubs, aes(xn,y, group=paste0(name,id), fill=fill, color=color), alpha=0.8, size=0.01)+
   scale_fill_manual(values=c('green','orange'))+
   scale_color_manual(values=c('brown','darkgreen'))+
-  theme(legend.position = "none")+
+  theme(legend.position = "none", 
+        panel.background = element_rect(fill = rgb(0.85,0.95,1,0.5),
+                                        colour = "black",
+                                        size = 0.5, linetype = "solid"),
+        panel.grid.major = element_line(size = 0.5, linetype = 'solid',
+                                        colour = rgb(0.1, 0.1, 0.1, 0.3)), 
+        panel.grid.minor = element_line(size = 0.1, linetype = 'solid',
+                                        colour = rgb(0.1, 0.1, 0.1, 0.1))
+  )+
   coord_fixed(ratio = 1)+
-  scale_y_continuous(trans='identity', breaks = c(-1:(120/5))*5, limits = c(0,50))+
-  scale_x_continuous(breaks = c(-1:(120/5))*5, limits = c(0,50))
+  scale_y_continuous(trans='identity', breaks = c(-1:(120/5))*5,minor_breaks = c(-1:(120)), limits = c(0,50))+
+  scale_x_continuous(breaks = c(-1:(120/5))*5, minor_breaks = c(-1:(120)), limits = c(-5,55))
