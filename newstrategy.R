@@ -86,11 +86,10 @@ ht.max = 5
 ht.min = 2
 crwd = 2
 dbh = 30
-colorname <- c('green', 'darkgreen', 'brown', 'orange')
-p=0.2
+
 colormixer <- function(colorname, mixcolor, p){
   ccc <- col2rgb(colorname)
-  ccc <- data.frame(r = ccc[1,],   g = ccc[3,],   b = ccc[3,])
+  ccc <- data.frame(r = ccc[1,],   g = ccc[2,],   b = ccc[3,])
   mmm <- col2rgb(mixcolor)
   new <- ccc |> mutate(r = r*(1-p)+mmm[1,1]*p,
                        g = g*(1-p)+mmm[2,1]*p,
@@ -98,8 +97,6 @@ colormixer <- function(colorname, mixcolor, p){
   new <- rgb(new$r/255,new$g/255,new$b/255)
   return(new)
 }
-colormixer(colorname, "#D9F2FF", 0.1)
-
 
 make_tree <- function(ht.max, ht.min,crwd,dbh, crshape, stshape){
   crown <- subset(shapes, shape %in% crshape) |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
@@ -120,7 +117,7 @@ shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks'
 
 
 stand <- make_hex_stand(0.5,1) |> subset(yp >= 15 & yp < 45) |> mutate(wtn = wt, stratid = NA)
-strats <- data.frame(stratid = c(1:3), stems = c(20,5,20))
+strats <- data.frame(stratid = c(1:3), stems = c(20,20,20))
 for (i in 1:nrow(strats)){#i=1
   thistrat = strats$stratid[i]
   nstems = strats$stems[i]
@@ -152,14 +149,14 @@ ypmax <- max(plants$yp)
 ypmin <- min(plants$yp)
 ypwid <- ypmax-ypmin
 crowns1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'crown') |> 
-  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.2))
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.7), color=colormixer(color, "#D9F2FF", 0.7))
 crowns2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'crown')|> 
-  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.6))
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.3), color=colormixer(color, "#D9F2FF", 0.3))
 crowns3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% 'crown')
 stems1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'stem')|> 
-  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.2))
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.7), color=colormixer(color, "#D9F2FF", 0.7))
 stems2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'stem')|> 
-  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.6))
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.3), color=colormixer(color, "#D9F2FF", 0.3))
 stems3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% 'stem')
 
 plants2 <- rbind(crowns1,crowns2,crowns3,stems1,stems2,stems3)
