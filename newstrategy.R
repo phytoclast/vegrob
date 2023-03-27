@@ -19,26 +19,23 @@ make_hex_stand <- function(hects=1, minsize=1){
   mx3 <- merge(x*f,y*f) |> as.data.frame() |> mutate(x = ifelse(floor(y/2)==y/2, x-f*0.5,x), y = round(y*(3^0.5)/2,2), wt=f^2)  |> subset(x <=100*hects & y <= 100*hects)
   mm <- rbind(m,mx1,mx2,mx3) |> group_by(x,y) |> summarise(wt=max(wt)) |> as.data.frame()
   mm <- mm |> mutate(x = x*minsize, y = y*minsize)
-  colnames(mm) <- c('x','z','wt')
+  colnames(mm) <- c('xp','yp','wt')
   rownames(mm) <- 1:nrow(mm) |> as.numeric()
+  mm$stumpid <- rownames(mm)
   return(mm)
 }
 
-stand <- make_hex_stand(0.5,1)
-stand1 <- subset(stand, z >= 15 & z < 45)
-stumps <- stand1[sample(row.names(stand1),size = 50,prob = stand1$wt),]
-
-ggplot()+
-  geom_point(data=stand, aes(x=x,y=z,size=wt), color='white')+
-  geom_point(data=stand1, aes(x=x,y=z), color='pink', size=0.5) +
-  geom_point(data=stumps, aes(x=x,y=z), color='black', size=0.5)+
-  coord_fixed(ratio = 1)
+# ggplot()+
+#   geom_point(data=stand, aes(x=x,y=z,size=wt), color='white')+
+#   geom_point(data=stand1, aes(x=x,y=z), color='pink', size=0.5) +
+#   geom_point(data=stumps, aes(x=x,y=z), color='black', size=0.5)+
+#   coord_fixed(ratio = 1)
 
 
 
 
 
-conifer1 <- read.csv('conifer1.csv') |> data.frame(name='conifer1', fill='darkgreen', color='darkgreen')
+conifer1 <- read.csv('conifer1.csv') |> data.frame(name='conifer1', fill=rgb(0.1,0.5,0.1), color='darkgreen')
 conifer2 <- read.csv('conifer2.csv') |> data.frame(name='conifer2', fill='darkgreen', color='darkgreen')
 cloud1 <- read.csv('cloud1.csv') |> data.frame(name='cloud1', fill='green', color='darkgreen')
 flattop <- read.csv('flattop.csv') |> data.frame(name='flattop', fill='green', color='darkgreen')
@@ -80,105 +77,118 @@ forb <- data.frame(x=c(-0.04, -0.04, -0.32, -0.38, -0.45, -0.50, -0.45, -0.38, -
 fern <- data.frame(x=c(-0.09, -0.12, -0.16, -0.22, -0.31, -0.50, -0.28, -0.12, -0.15, -0.10, -0.06, -0.06, -0.13, -0.05, -0.01,  0.06,  0.02,  0.00,  0.03, -0.05, -0.04,  0.02,  0.10,  0.09,  0.24, 0.50,  0.27,  0.17,  0.11,  0.03, -0.03, -0.09), 
                           y=c(0, 0.13, 0.2, 0.1, 0.29, 0.41, 0.43, 0.32, 0.24, 0.15, 0.02, 0.38, 0.44, 0.88, 0.96, 1, 0.94, 0.85, 0.42, 0.38, 0.03, 0.16, 0.28, 0.4, 0.45, 0.44, 0.27, 0.12, 0.25, 0.13, 0, 0), name='fern', fill='green', color='darkgreen')
 
+shapes <- rbind(conifer1,conifer2,cloud1,flattop,flattop2,blob,trunk,triangle,dome,sticks,grass,forb,fern)
+colnames(shapes) <- c("x","z","shape","fill","color")
+# ggplot() +geom_polygon(data=shapes, aes(x=x,y=z,  group = shape, fill=fill, color=color), alpha=0.8)
 
-ggplot() +
-  geom_polygon(data=trunk, aes(x,y,  fill=name, color=name), alpha=0.8)
 
 ht.max = 5
 ht.min = 2
 crwd = 2
 dbh = 30
-
-make_B_tree <- function(ht.max, ht.min,crwd,dbh){
-  crown <- blob |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-make_B_tree2 <- function(ht.max, ht.min,crwd,dbh){
-  crown <- flattop2 |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-make_shrub <- function(ht.max, ht.min,crwd){
-  crown <- cloud1 |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
-  base <- sticks |> mutate(x=x*crwd*0.8, y=y*(ht.min)) #|> data.frame(id=2) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-make_palm <- function(ht.max, ht.min,crwd,dbh){
-  crown <- palm |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-make_N_tree <- function(ht.max, ht.min,crwd,dbh){
-  crown <- conifer1 |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-make_N_tree2 <- function(ht.max, ht.min,crwd,dbh){
-  crown <- conifer2 |> mutate(x=x*crwd, y=y*(ht.max-ht.min)+ht.min) #|> data.frame(id=1)
-  base <- trunk |> mutate(x=x*dbh/100*1.1, y=y*(ht.min)) #|> data.frame(id=2) 
-  tree = rbind(crown, base)
-  tree$ptord <- rownames(tree) |> as.numeric()
-  return(tree)}
-
-tree <- make_B_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30) 
-tree2 <- make_N_tree2(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30) 
-shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2) 
-
-sample0 <- sample(row.names(stand1), size = 5, prob = stand1$wt)
-stand2 <- stand1 |> mutate(wt = ifelse(rownames(stand1) %in% sample0, 0,wt))
-sample1 <- sample(row.names(stand2), size = 20, prob = stand2$wt)
-stand2 <- stand1 |> mutate(wt = ifelse(rownames(stand1) %in% sample1, 0,wt))
-sample2 <- sample(row.names(stand2), size = 20, prob = stand2$wt)
-stumps0 <- stand1[sample0,]
-stumps1 <- stand1[sample1,]
-stumps2 <- stand1[sample2,]
-stumps0a <- data.frame(id=rownames(stumps0), xp=stumps0$x, z=stumps0$z)
-stumps1a <- data.frame(id=rownames(stumps1), xp=stumps1$x, z=stumps1$z)
-stumps2a <- data.frame(id=rownames(stumps2), xp=stumps2$x, z=stumps2$z)
+colorname <- c('green', 'darkgreen', 'brown', 'orange')
+p=0.2
+colormixer <- function(colorname, mixcolor, p){
+  ccc <- col2rgb(colorname)
+  ccc <- data.frame(r = ccc[1,],   g = ccc[3,],   b = ccc[3,])
+  mmm <- col2rgb(mixcolor)
+  new <- ccc |> mutate(r = r*(1-p)+mmm[1,1]*p,
+                       g = g*(1-p)+mmm[2,1]*p,
+                       b = b*(1-p)+mmm[3,1]*p)
+  new <- rgb(new$r/255,new$g/255,new$b/255)
+  return(new)
+}
+colormixer(colorname, "#D9F2FF", 0.1)
 
 
-trees0 <- merge(stumps0a, tree2) 
-trees1 <- merge(stumps1a, tree) 
-shrubs <- merge(stumps2a, shrub) 
+make_tree <- function(ht.max, ht.min,crwd,dbh, crshape, stshape){
+  crown <- subset(shapes, shape %in% crshape) |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
+  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*dbh/100*1.1, z=z*(ht.min), obj='stem') 
+  tree = rbind(crown, base)
+  tree$ptord <- rownames(tree) |> as.numeric()
+  return(tree)}
+make_shrub <- function(ht.max, ht.min,crwd, crshape, stshape){
+  crown <- subset(shapes, shape %in% crshape)  |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
+  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*crwd*0.8, z=z*(ht.min), obj='stem') 
+  shrub = rbind(crown, base)
+  shrub$ptord <- rownames(shrub) |> as.numeric()
+  return(shrub)}
+
+tree <- make_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30, crshape='blob', stshape='trunk') 
+tree2 <- make_tree(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30, crshape='conifer1', stshape='trunk')  
+shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks')  
+
+
+stand <- make_hex_stand(0.5,1) |> subset(yp >= 15 & yp < 45) |> mutate(wtn = wt, stratid = NA)
+strats <- data.frame(stratid = c(1:3), stems = c(20,5,20))
+for (i in 1:nrow(strats)){#i=1
+  thistrat = strats$stratid[i]
+  nstems = strats$stems[i]
+  newstumps <- sample(stand$stumpid, size = nstems, prob = stand$wtn)
+  stand <- stand |> mutate(wtn = ifelse(stand$stumpid %in% newstumps, 0, wtn), 
+                           stratid = ifelse(stand$stumpid %in% newstumps, thistrat,stratid))
+}
+stumps1 <- stand |> subset(stratid %in% 1)
+stumps2 <- stand |> subset(stratid %in% 2)
+stumps3 <- stand |> subset(stratid %in% 3)
+
+trees0 <- merge(stumps1, tree) |> mutate(objid = paste0(obj,stumpid))
+trees1 <- merge(stumps2, tree2)  |> mutate(objid = paste0(obj,stumpid))
+shrubs <- merge(stumps3, shrub)  |> mutate(objid = paste0(obj,stumpid))
 plants <- rbind(trees0, trees1, shrubs)
 
 #randomize sizes and positions
-plants <- plants |> group_by(id) |> 
-  mutate(ht.max = max(y), crwd = max(x)-min(x),
+plants <- plants |> group_by(stumpid) |> 
+  mutate(ht.max = max(z), crwd = max(x)-min(x),
          xpp = xp + runif(1, min = -0.5, max = 0.5),#shift position on grid
-         yr = rnorm(1,ht.max, ht.max/10)/ht.max,#deviation in height
+         zr = rnorm(1,ht.max, ht.max/10)/ht.max,#deviation in height
          xr = (rnorm(1,ht.max, ht.max/10)/ht.max+rnorm(1,crwd, crwd/10)/crwd)/2,#deviation in width partially related to height
          xn = x*xr+xpp,#resized width and put on new position
-         yn = y*yr*(1-1/15))#resized height adjusted downward show that variation is less than max height in the field
+         zn = z*zr*(1-1/15))#resized height adjusted downward show that variation is less than max height in the field
 
 #rearrange stems depth drawing order
-plants <- plants |> arrange(id, name, ptord, z)
-zmax <- max(plants$z)
-zmin <- min(plants$z)
-zwid <- zmax-zmin
-plants1 <- plants |> subset(z < zmin+zwid/3)
-plants2 <- plants |> subset(z < zmax-zwid/3 & z >= zmin+zwid/3)
-plants3 <- plants |> subset(z >= zmax-zwid/3)
+plants <- plants |> arrange(yp,stumpid, objid, ptord)
+ypmax <- max(plants$yp)
+ypmin <- min(plants$yp)
+ypwid <- ypmax-ypmin
+crowns1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'crown') |> 
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.2))
+crowns2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'crown')|> 
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.6))
+crowns3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% 'crown')
+stems1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'stem')|> 
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.2))
+stems2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'stem')|> 
+  mutate(fill=colormixer(fill, "#D9F2FF", 0.9), color=colormixer(color, "#D9F2FF", 0.6))
+stems3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% 'stem')
+
+plants2 <- rbind(crowns1,crowns2,crowns3,stems1,stems2,stems3)
+
+# ggplot()+
+#   geom_point(aes(x=1,y=1))+  
+#   theme(panel.background = element_rect(fill = rgb(0.4,0.6,0.5)))
+
+pcolor <- plants2$color |> unique() |> sort()
+pfill <- plants2$fill |> unique()|> sort()
+
+
 
 ggplot() +
-  geom_polygon(data=plants1, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.9, size=0.01)+
-  geom_polygon(data=plants2, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.9, size=0.01)+
-  geom_polygon(data=plants3, aes(x=xn,y=yn,group=paste0(name,id), fill=fill, color=color), alpha=0.9, size=0.01)+
-  scale_fill_manual(values=c('darkgreen','green','orange'))+
-  scale_color_manual(values=c('brown','darkgreen'))+
+  geom_polygon(data=stems1, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  geom_polygon(data=crowns1, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  geom_polygon(data=stems2, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  geom_polygon(data=crowns2, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  geom_polygon(data=stems3, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  geom_polygon(data=crowns3, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
+  scale_fill_manual(values=pfill)+
+  scale_color_manual(values=pcolor)+
   theme(legend.position = "none", 
         panel.background = element_rect(fill = rgb(0.85,0.95,1,0.5),
                                         colour = "black",
-                                        size = 0.5, linetype = "solid"),
-        panel.grid.major = element_line(size = 0.5, linetype = 'solid',
+                                        linewidth = 0.5, linetype = "solid"),
+        panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid',
                                         colour = rgb(0.1, 0.1, 0.1, 0.3)), 
-        panel.grid.minor = element_line(size = 0.1, linetype = 'solid',
+        panel.grid.minor = element_line(linewidth = 0.1, linetype = 'solid',
                                         colour = rgb(0.1, 0.1, 0.1, 0.1))
   )+
   coord_fixed(ratio = 1)+
