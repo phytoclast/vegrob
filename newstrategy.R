@@ -98,6 +98,7 @@ colormixer <- function(colorname, mixcolor, p){
   return(new)
 }
 
+
 make_tree <- function(ht.max, ht.min,crwd,dbh, crshape, stshape){
   crown <- subset(shapes, shape %in% crshape) |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
   base <- subset(shapes, shape %in% stshape) |> mutate(x=x*dbh/100*1.1, z=z*(ht.min), obj='stem') 
@@ -115,17 +116,31 @@ make_herb <- function(ht.max,crwd, crshape){
   herb$ptord <- rownames(herb) |> as.numeric()
   return(herb)}
 
-tree <- make_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30, crshape='blob', stshape='trunk') 
-tree2 <- make_tree(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30, crshape='conifer1', stshape='trunk')  
-shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks')  
-grass <- make_herb(ht.max=0.5,crwd=1, crshape='grassy')  
-fern <- make_herb(ht.max=1,crwd=1, crshape='ferny')  
-forb <- make_herb(ht.max=1,crwd=1, crshape='forby')  
+make_plant<- function(fun, ht.max, ht.min,crwd,dbh, crshape, stshape){
+  if(fun %in% 'T'){
+    plant <- make_tree(ht.max, ht.min,crwd,dbh, crshape, stshape)}else
+      if(fun %in% 'S'){
+        plant <- make_shrub(ht.max, ht.min, crwd, crshape, stshape)}else
+        {
+          plant <- make_herb(ht.max,crwd, crshape)}
+}
+# tree <- make_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30, crshape='blob', stshape='trunk') 
+# tree2 <- make_tree(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30, crshape='conifer1', stshape='trunk')  
+# shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks')  
+# grass <- make_herb(ht.max=0.5,crwd=1, crshape='grassy')  
+# fern <- make_herb(ht.max=1,crwd=1, crshape='ferny')  
+# forb <- make_herb(ht.max=1,crwd=1, crshape='forby')  
+
+#raw information about the strata
+strats <- data.frame(stratid = c(1:6), stems = c(5,10,10,50,20,10), fun = c('T','T','S','H','H','H'),
+                     ht.max=c(20,30,3,0.5,1,1),ht.min=c(10,7.5,1,NA,NA,NA),
+                     crwd = c(9,5,2,1,1,1),dbh = c(30,30,NA,NA,NA,NA),
+                     crshape=c('blob','conifer1','cloud1','grassy','ferny','forby'), stshape=c('trunk','trunk','sticks',NA,NA,NA))
 
 #make stand
 stand <- make_hex_stand(0.5,1) |> subset(yp >= 15 & yp < 35) |> mutate(wtn = wt, stratid = NA)
 #define counts per stratum
-strats <- data.frame(stratid = c(1:6), stems = c(5,10,10,50,20,10))
+
 for (i in 1:nrow(strats)){#i=1
   thistrat = strats$stratid[i]
   nstems = strats$stems[i]
@@ -134,21 +149,29 @@ for (i in 1:nrow(strats)){#i=1
                            stratid = ifelse(stand$stumpid %in% newstumps, thistrat,stratid))
 }
 
+#Create shapes of the right size, then distribute into the stump positions.
+for (i in 1:nrow(strats)){#i=1
+  thistrat <- strats[i,]
+plant0 <- make_plant(thistrat$fun, thistrat$ht.max, thistrat$ht.min,thistrat$crwd,thistrat$dbh, thistrat$crshape, thistrat$stshape)
+stumps0 <- stand |> subset(stratid %in% i)
+plant0 <- merge(stumps0, plant0) |> mutate(objid = paste0(obj,stumpid))
+if(i==1){plants <- plant0}else{plants <- rbind(plants,plant0)}
+}
 
-stumps1 <- stand |> subset(stratid %in% 1)
-stumps2 <- stand |> subset(stratid %in% 2)
-stumps3 <- stand |> subset(stratid %in% 3)
-stumps4 <- stand |> subset(stratid %in% 4)
-stumps5 <- stand |> subset(stratid %in% 5)
-stumps6 <- stand |> subset(stratid %in% 6)
-
-trees0 <- merge(stumps1, tree) |> mutate(objid = paste0(obj,stumpid))
-trees1 <- merge(stumps2, tree2)  |> mutate(objid = paste0(obj,stumpid))
-shrubs <- merge(stumps3, shrub)  |> mutate(objid = paste0(obj,stumpid))
-grasses <- merge(stumps4, grass)  |> mutate(objid = paste0(obj,stumpid))
-ferns <- merge(stumps5, fern)  |> mutate(objid = paste0(obj,stumpid))
-forbs <- merge(stumps6, forb)  |> mutate(objid = paste0(obj,stumpid))
-plants <- rbind(trees0, trees1, shrubs, grasses, ferns, forbs)
+# stumps1 <- stand |> subset(stratid %in% 1)
+# stumps2 <- stand |> subset(stratid %in% 2)
+# stumps3 <- stand |> subset(stratid %in% 3)
+# stumps4 <- stand |> subset(stratid %in% 4)
+# stumps5 <- stand |> subset(stratid %in% 5)
+# stumps6 <- stand |> subset(stratid %in% 6)
+# 
+# trees0 <- merge(stumps1, tree) |> mutate(objid = paste0(obj,stumpid))
+# trees1 <- merge(stumps2, tree2)  |> mutate(objid = paste0(obj,stumpid))
+# shrubs <- merge(stumps3, shrub)  |> mutate(objid = paste0(obj,stumpid))
+# grasses <- merge(stumps4, grass)  |> mutate(objid = paste0(obj,stumpid))
+# ferns <- merge(stumps5, fern)  |> mutate(objid = paste0(obj,stumpid))
+# forbs <- merge(stumps6, forb)  |> mutate(objid = paste0(obj,stumpid))
+# plants <- rbind(trees0, trees1, shrubs, grasses, ferns, forbs)
 
 #randomize sizes and positions
 plants <- plants |> group_by(stumpid) |> 
