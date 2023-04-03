@@ -25,15 +25,6 @@ make_hex_stand <- function(hects=1, minsize=1){
   return(mm)
 }
 
-# ggplot()+
-#   geom_point(data=stand, aes(x=x,y=z,size=wt), color='white')+
-#   geom_point(data=stand1, aes(x=x,y=z), color='pink', size=0.5) +
-#   geom_point(data=stumps, aes(x=x,y=z), color='black', size=0.5)+
-#   coord_fixed(ratio = 1)
-
-
-
-
 
 conifer1 <- read.csv('conifer1.csv') |> data.frame(name='conifer1', fill="#1A801A", color='darkgreen')
 conifer2 <- read.csv('conifer2.csv') |> data.frame(name='conifer2', fill='darkgreen', color='darkgreen')
@@ -154,7 +145,7 @@ for (i in 1:nrow(strats)){#i=1
   thistrat <- strats[i,]
 plant0 <- make_plant(thistrat$fun, thistrat$ht.max, thistrat$ht.min,thistrat$cw,thistrat$dbh, thistrat$crshape, thistrat$stshape)
 stumps0 <- stand |> subset(stratid %in% i)
-plant0 <- merge(stumps0, plant0) |> mutate(objid = paste0(obj,stumpid))
+plant0 <- merge(stumps0, plant0) |> mutate(objid = paste0(stratid,obj,stumpid))
 if(i==1){plants <- plant0}else{plants <- rbind(plants,plant0)}
 }
 
