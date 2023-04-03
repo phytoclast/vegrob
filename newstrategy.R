@@ -72,9 +72,9 @@ sticks <- data.frame(x=c(-0.075,-0.13,-0.12,-0.025,-0.005,0.005,0.025,0.12,0.13,
 grassy <- data.frame(x=c(-0.3, -0.5, -0.1,  0.0,  0.1,  0.5,  0.3), y=c(0,0.85,0,1,0,0.85,0), name='grassy', fill='yellowgreen', color="#4D8000")
 
 
-forby <- data.frame(x=c(-0.04, -0.04, -0.32, -0.38, -0.45, -0.50, -0.45, -0.38, -0.32, -0.04, -0.04, -0.13, -0.12,  0.00,  0.10,  0.12,  0.03,  0.04,  0.29,  0.34,  0.44,  0.50,  0.43,  0.34,  0.30, 0.04, 0.05, -0.04), 
+forby <- data.frame(x=c(-0.04, -0.04, -0.32, -0.38, -0.45, -0.50, -0.45, -0.38, -0.32, -0.04, -0.04, -0.13, -0.12,  0.00,  0.10,  0.12,  0.03,  0.04,  0.29,  0.34,  0.44,  0.50,  0.43,  0.34,  0.30, 0.04, 0.05, -0.04),
                           y=c(0, 0.39, 0.57, 0.52, 0.52, 0.61, 0.7, 0.7, 0.61, 0.45, 0.78, 0.82, 0.95, 1, 0.95, 0.82, 0.78, 0.45, 0.68, 0.76, 0.77, 0.68, 0.59, 0.59, 0.63, 0.39, 0, 0), name='forby', fill='magenta', color='darkgreen')
-ferny <- data.frame(x=c(-0.09, -0.12, -0.16, -0.22, -0.31, -0.50, -0.28, -0.12, -0.15, -0.10, -0.06, -0.06, -0.13, -0.05, -0.01,  0.06,  0.02,  0.00,  0.03, -0.05, -0.04,  0.02,  0.10,  0.09,  0.24, 0.50,  0.27,  0.17,  0.11,  0.03, -0.03, -0.09), 
+ferny <- data.frame(x=c(-0.09, -0.12, -0.16, -0.22, -0.31, -0.50, -0.28, -0.12, -0.15, -0.10, -0.06, -0.06, -0.13, -0.05, -0.01,  0.06,  0.02,  0.00,  0.03, -0.05, -0.04,  0.02,  0.10,  0.09,  0.24, 0.50,  0.27,  0.17,  0.11,  0.03, -0.03, -0.09),
                           y=c(0, 0.13, 0.2, 0.1, 0.29, 0.41, 0.43, 0.32, 0.24, 0.15, 0.02, 0.38, 0.44, 0.88, 0.96, 1, 0.94, 0.85, 0.42, 0.38, 0.03, 0.16, 0.28, 0.4, 0.45, 0.44, 0.27, 0.12, 0.25, 0.13, 0, 0), name='ferny', fill='green', color='darkgreen')
 
 shapes <- rbind(conifer1,conifer2,cloud1,flattop,flattop2,blob,trunk,triangle,dome,sticks,grassy,forby,ferny)
@@ -101,13 +101,13 @@ colormixer <- function(colorname, mixcolor, p){
 
 make_tree <- function(ht.max, ht.min,crwd,dbh, crshape, stshape){
   crown <- subset(shapes, shape %in% crshape) |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
-  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*dbh/100*1.1, z=z*(ht.min), obj='stem') 
+  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*dbh/100*1.1, z=z*(ht.min), obj='stem')
   tree = rbind(crown, base)
   tree$ptord <- rownames(tree) |> as.numeric()
   return(tree)}
 make_shrub <- function(ht.max, ht.min,crwd, crshape, stshape){
   crown <- subset(shapes, shape %in% crshape)  |> mutate(x=x*crwd, z=z*(ht.max-ht.min)+ht.min, obj='crown')
-  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*crwd*0.8, z=z*(ht.min), obj='stem') 
+  base <- subset(shapes, shape %in% stshape) |> mutate(x=x*crwd*0.8, z=z*(ht.min), obj='stem')
   shrub = rbind(crown, base)
   shrub$ptord <- rownames(shrub) |> as.numeric()
   return(shrub)}
@@ -124,17 +124,17 @@ make_plant<- function(fun, ht.max, ht.min,crwd,dbh, crshape, stshape){
         {
           plant <- make_herb(ht.max,crwd, crshape)}
 }
-# tree <- make_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30, crshape='blob', stshape='trunk') 
-# tree2 <- make_tree(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30, crshape='conifer1', stshape='trunk')  
-# shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks')  
-# grass <- make_herb(ht.max=0.5,crwd=1, crshape='grassy')  
-# fern <- make_herb(ht.max=1,crwd=1, crshape='ferny')  
-# forb <- make_herb(ht.max=1,crwd=1, crshape='forby')  
+# tree <- make_tree(ht.max=20,ht.min=7.5,crwd = 5,dbh = 30, crshape='blob', stshape='trunk')
+# tree2 <- make_tree(ht.max=30,ht.min=7.5,crwd = 5,dbh = 30, crshape='conifer1', stshape='trunk')
+# shrub <- make_shrub(ht.max=3,ht.min=1,crwd=2, crshape='cloud1', stshape='sticks')
+# grass <- make_herb(ht.max=0.5,crwd=1, crshape='grassy')
+# fern <- make_herb(ht.max=1,crwd=1, crshape='ferny')
+# forb <- make_herb(ht.max=1,crwd=1, crshape='forby')
 
 #raw information about the strata
-strats <- data.frame(stratid = c(1:6), stems = c(5,10,10,50,20,10), fun = c('T','T','S','H','H','H'),
+strats <- data.frame(stratid = c(1:6), stems = c(5,10,10,5000,20,10), fun = c('T','T','S','H','H','H'),
                      ht.max=c(20,30,3,0.5,1,1),ht.min=c(10,7.5,1,NA,NA,NA),
-                     crwd = c(9,5,2,1,1,1),dbh = c(30,30,NA,NA,NA,NA),
+                     cw = c(9,5,2,1,1,1),dbh = c(30,30,NA,NA,NA,NA),
                      crshape=c('blob','conifer1','cloud1','grassy','ferny','forby'), stshape=c('trunk','trunk','sticks',NA,NA,NA))
 
 #make stand
@@ -144,15 +144,15 @@ stand <- make_hex_stand(0.5,1) |> subset(yp >= 15 & yp < 35) |> mutate(wtn = wt,
 for (i in 1:nrow(strats)){#i=1
   thistrat = strats$stratid[i]
   nstems = strats$stems[i]
-  newstumps <- sample(stand$stumpid, size = nstems, prob = stand$wtn)
-  stand <- stand |> mutate(wtn = ifelse(stand$stumpid %in% newstumps, 0, wtn), 
+  newstumps <- sample(stand$stumpid, size = nstems, prob = stand$wtn, replace = T)
+  stand <- stand |> mutate(wtn = ifelse(stand$stumpid %in% newstumps, 0, wtn),
                            stratid = ifelse(stand$stumpid %in% newstumps, thistrat,stratid))
 }
 
 #Create shapes of the right size, then distribute into the stump positions.
 for (i in 1:nrow(strats)){#i=1
   thistrat <- strats[i,]
-plant0 <- make_plant(thistrat$fun, thistrat$ht.max, thistrat$ht.min,thistrat$crwd,thistrat$dbh, thistrat$crshape, thistrat$stshape)
+plant0 <- make_plant(thistrat$fun, thistrat$ht.max, thistrat$ht.min,thistrat$cw,thistrat$dbh, thistrat$crshape, thistrat$stshape)
 stumps0 <- stand |> subset(stratid %in% i)
 plant0 <- merge(stumps0, plant0) |> mutate(objid = paste0(obj,stumpid))
 if(i==1){plants <- plant0}else{plants <- rbind(plants,plant0)}
@@ -164,7 +164,7 @@ if(i==1){plants <- plant0}else{plants <- rbind(plants,plant0)}
 # stumps4 <- stand |> subset(stratid %in% 4)
 # stumps5 <- stand |> subset(stratid %in% 5)
 # stumps6 <- stand |> subset(stratid %in% 6)
-# 
+#
 # trees0 <- merge(stumps1, tree) |> mutate(objid = paste0(obj,stumpid))
 # trees1 <- merge(stumps2, tree2)  |> mutate(objid = paste0(obj,stumpid))
 # shrubs <- merge(stumps3, shrub)  |> mutate(objid = paste0(obj,stumpid))
@@ -174,7 +174,7 @@ if(i==1){plants <- plant0}else{plants <- rbind(plants,plant0)}
 # plants <- rbind(trees0, trees1, shrubs, grasses, ferns, forbs)
 
 #randomize sizes and positions
-plants <- plants |> group_by(stumpid) |> 
+plants <- plants |> group_by(stumpid) |>
   mutate(ht.max = max(z), crwd = max(x)-min(x),
          xpp = xp + runif(1, min = -0.8, max = 0.8),#shift position on grid
          zr = rnorm(1,ht.max, ht.max/10)/ht.max,#deviation in height
@@ -187,21 +187,21 @@ plants <- plants |> arrange(yp,stumpid, objid, ptord)
 ypmax <- max(plants$yp)
 ypmin <- min(plants$yp)
 ypwid <- ypmax-ypmin
-crowns1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% c('crown','herb')) |> 
+crowns1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% c('crown','herb')) |>
   mutate(fill=colormixer(fill, "#D9F2FF", 0.7), color=colormixer(color, "#D9F2FF", 0.7))
-crowns2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% c('crown','herb'))|> 
+crowns2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% c('crown','herb'))|>
   mutate(fill=colormixer(fill, "#D9F2FF", 0.3), color=colormixer(color, "#D9F2FF", 0.3))
 crowns3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% c('crown','herb'))
-stems1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'stem')|> 
+stems1 <- plants |> subset(yp < ypmin+ypwid/3 & obj %in% 'stem')|>
   mutate(fill=colormixer(fill, "#D9F2FF", 0.7), color=colormixer(color, "#D9F2FF", 0.7))
-stems2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'stem')|> 
+stems2 <- plants |> subset(yp < ypmax-ypwid/3 & yp >= ypmin+ypwid/3 & obj %in% 'stem')|>
   mutate(fill=colormixer(fill, "#D9F2FF", 0.3), color=colormixer(color, "#D9F2FF", 0.3))
 stems3 <- plants |> subset(yp >= ypmax-ypwid/3 & obj %in% 'stem')
 
 plants2 <- rbind(crowns1,crowns2,crowns3,stems1,stems2,stems3)
 
 # ggplot()+
-#   geom_point(aes(x=1,y=1))+  
+#   geom_point(aes(x=1,y=1))+
 #   theme(panel.background = element_rect(fill = rgb(0.4,0.6,0.5)))
 
 pcolor <- plants2$color |> unique() |> sort()
@@ -218,12 +218,12 @@ ggplot() +
   geom_polygon(data=crowns3, aes(x=xn,y=zn,group=objid, fill=fill, color=color), alpha=1, linewidth=0.01)+
   scale_fill_manual(values=pfill)+
   scale_color_manual(values=pcolor)+
-  theme(legend.position = "none", 
+  theme(legend.position = "none",
         panel.background = element_rect(fill = rgb(0.85,0.95,1,0.5),
                                         colour = "black",
                                         linewidth = 0.5, linetype = "solid"),
         panel.grid.major = element_line(linewidth = 0.5, linetype = 'solid',
-                                        colour = rgb(0.1, 0.1, 0.1, 0.3)), 
+                                        colour = rgb(0.1, 0.1, 0.1, 0.3)),
         panel.grid.minor = element_line(linewidth = 0.1, linetype = 'solid',
                                         colour = rgb(0.1, 0.1, 0.1, 0.1))
   )+
