@@ -14,10 +14,38 @@ convert.SVG <- function(filename){
 
   blob$x <- (blob$x - (max(blob$x) + min(blob$x))/2) / (max(blob$x) - min(blob$x))
   blob$y <- 1-1*(blob$y - min(blob$y)) / (max(blob$y) - min(blob$y))
-  blob <- subset(blob, select=c(x,y))
+  blob <- subset(blob)
   return(blob)
 
 }
+tree <- convert.SVG('complextree.svg')
+library(sf)
+library(dplyr)
+library(ggplot2)
+ggplot()+
+  geom_polygon(data=tree, aes(x=x,y=y, group=elem_idx), fill=tree$fill, alpha=0.1)
+
+
+tree.branch = subset(tree, !elem_idx %in% c(2,34,33))
+
+ggplot()+
+  geom_polygon(data=tree.branch, aes(x=x,y=y, group=elem_idx), fill=tree.branch$fill, alpha=0.1)
+
+
+trbr <- st_as_sf(tree.branch, coords=c("x", "y"))
+trbr = trbr %>% 
+  group_by(elem_idx) %>% 
+  summarise() %>%
+  st_cast("POLYGON")
+trbr.1<- st_union(trbr)  |> st_buffer(0.02)
+# trbr.1<- trbr
+separated_coord <- data.frame(x = st_coordinates(trbr.1)[,1],
+         y = st_coordinates(trbr.1)[,2],
+         L1= st_coordinates(trbr.1)[,3],
+         L2= st_coordinates(trbr.1)[,4])
+
+ggplot()+
+  geom_polygon(data=separated_coord, aes(x=x,y=y, group=L2, subgroup = L1), alpha=0.1)
 
 blob <- convert.SVG('blob.svg')
 trunk <- convert.SVG('trunk.svg')
