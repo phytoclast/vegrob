@@ -25,11 +25,32 @@ library(ggplot2)
 ggplot()+
   geom_polygon(data=tree, aes(x=x,y=y, group=elem_idx), fill=tree$fill, alpha=0.1)
 
+library(vegnasis)
 
+d = c(5 ,10,20,30,40,50,100,200,300)
+w = est_crown_width(d)
+((d/100)/w)^-1
+
+h = c(5,12,30,50)
+d = fill.diameters(h)
+h/(d/100)
+
+tree = tree |> mutate(x = ifelse(x > -0.05 & x < 0.05, 0,x), x = dplyr::case_when(y < 0.05 & x < 0 ~ -0.05,
+                                                                                                y < 0.05 & x > 0 ~ 0.05,
+                                                                                                TRUE ~ x))
+tree = tree |> mutate(y = y*0.1*40)
+tree = tree |> group_by(elem_idx) |> mutate(xmax = max(x), xmin = min(x), ymax = max(y), ymin = min(y))
 tree.branch = subset(tree, !elem_idx %in% c(2,34,33))
-
 ggplot()+
-  geom_polygon(data=tree.branch, aes(x=x,y=y, group=elem_idx), fill=tree.branch$fill, alpha=0.1)
+  geom_polygon(data=tree.branch, aes(x=x,y=y, group=elem_idx), fill=tree.branch$fill, alpha=0.1)+
+  coord_fixed()
+ggplot()+
+  geom_polygon(data=tree, aes(x=x,y=y, group=elem_idx), fill=tree$fill, alpha=0.1)+
+  coord_fixed()
+
+x= c(0,1)
+y= c(0,1)
+atan((y[1]-y[2])/(x[1]-x[2]))#/2/3.141592*360
 
 
 trbr <- st_as_sf(tree.branch, coords=c("x", "y"))
@@ -37,7 +58,7 @@ trbr = trbr %>%
   group_by(elem_idx) %>% 
   summarise() %>%
   st_cast("POLYGON")
-trbr.1<- st_union(trbr)  |> st_buffer(0.02)
+trbr.1<- st_union(trbr)  |> st_buffer(0.005)
 # trbr.1<- trbr
 separated_coord <- data.frame(x = st_coordinates(trbr.1)[,1],
          y = st_coordinates(trbr.1)[,2],
